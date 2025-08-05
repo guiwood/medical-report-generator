@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gerador de Relatórios Médicos</title>
+    <link rel="stylesheet" href="dashboard-styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>Gerador de Relatórios Médicos</h1>
+                <div class="user-info">
+                    <span id="userName">Carregando...</span>
+                    <button id="logoutBtn" class="logout-btn">Sair</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <div class="dashboard-grid">
+                <!-- Quick Actions -->
+                <section class="card quick-actions">
+                    <h2>Ações Rápidas</h2>
+                    <div class="action-buttons">
+                        <button class="action-btn primary" id="newReportBtn">
+                            <span class="btn-icon">📝</span>
+                            <span>Novo Relatório</span>
+                        </button>
+                        <button class="action-btn secondary" id="newTemplateBtn">
+                            <span class="btn-icon">📋</span>
+                            <span>Criar Template</span>
+                        </button>
+                        <button class="action-btn secondary" id="profileBtn">
+                            <span class="btn-icon">👤</span>
+                            <span>Perfil</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Templates Section -->
+                <section class="card templates-section">
+                    <div class="section-header">
+                        <h2>Meus Templates</h2>
+                        <button class="refresh-btn" id="refreshTemplates">↻</button>
+                    </div>
+                    <div id="templatesList" class="templates-list">
+                        <div class="loading">Carregando templates...</div>
+                    </div>
+                    <div class="empty-state" id="emptyTemplates" style="display: none;">
+                        <p>Nenhum template encontrado</p>
+                        <button class="action-btn secondary" id="createFirstTemplate">
+                            Criar primeiro template
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Recent Reports -->
+                <section class="card recent-reports">
+                    <div class="section-header">
+                        <h2>Relatórios Recentes</h2>
+                        <button class="refresh-btn" id="refreshReports">↻</button>
+                    </div>
+                    <div id="recentReportsList" class="reports-list">
+                        <div class="loading">Carregando relatórios...</div>
+                    </div>
+                    <div class="empty-state" id="emptyReports" style="display: none;">
+                        <p>Nenhum relatório encontrado</p>
+                        <p class="hint">Comece criando seu primeiro relatório!</p>
+                    </div>
+                </section>
+
+                <!-- Statistics -->
+                <section class="card statistics">
+                    <h2>Estatísticas</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalTemplates">0</span>
+                            <span class="stat-label">Templates</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalReports">0</span>
+                            <span class="stat-label">Relatórios</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="thisMonthReports">0</span>
+                            <span class="stat-label">Este Mês</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Template Modal -->
+    <div id="templateModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Criar Template</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="templateForm">
+                    <div class="form-group">
+                        <label for="templateName">Nome do Template:</label>
+                        <input type="text" id="templateName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="templateDescription">Descrição (opcional):</label>
+                        <textarea id="templateDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" id="cancelTemplate">Cancelar</button>
+                        <button type="submit" class="btn primary">Salvar Template</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Perfil do Usuário</h3>
+                <button class="close-btn" id="closeProfileModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="profileName">Nome Completo:</label>
+                        <input type="text" id="profileName">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileDoctorName">Nome do Médico:</label>
+                        <input type="text" id="profileDoctorName" placeholder="Dr. João Silva">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileCRM">CRM:</label>
+                        <input type="text" id="profileCRM" placeholder="123456">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" id="cancelProfile">Cancelar</button>
+                        <button type="submit" class="btn primary">Salvar Perfil</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Relatórios Médicos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Gerador de Relatórios Médicos</h1>
+                    <p>Para solicitação de autorização de procedimentos</p>
+                </div>
+                <div class="header-right">
+                    <span id="currentUser">Carregando...</span>
+                    <button id="backToDashboard" class="header-btn">← Dashboard</button>
+                    <button id="saveAsTemplate" class="header-btn">Salvar como Template</button>
+                </div>
+            </div>
+        </header>
+
+        <form id="reportForm">
+            <section class="report-info">
+                <h2>Informações do Relatório</h2>
+                <div class="form-group">
+                    <label for="reportDate">Data do Relatório:</label>
+                    <input type="date" id="reportDate">
+                </div>
+            </section>
+
+            <section class="patient-info">
+                <h2>Informações do Paciente</h2>
+                <div class="form-group">
+                    <label for="patientName">Nome Completo: <span class="required">*</span></label>
+                    <input type="text" id="patientName" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="patientDOB">Data de Nascimento:</label>
+                        <input type="date" id="patientDOB">
+                    </div>
+                    <div class="form-group">
+                        <label for="patientCPF">CPF:</label>
+                        <input type="text" id="patientCPF" placeholder="000.000.000-00" maxlength="14">
+                        <div class="validation-message" id="cpfValidation"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="patientPhone">Telefone:</label>
+                    <input type="tel" id="patientPhone" placeholder="(11) 99999-9999">
+                </div>
+
+                <div class="form-group">
+                    <label for="patientCare">Número do Atendimento:</label>
+                    <input type="text" id="patientCare" placeholder="Ex: 123456">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="insuranceProvider">Convênio:</label>
+                        <input type="text" id="insuranceProvider" placeholder="Nome do convênio">
+                    </div>
+                    <div class="form-group">
+                        <label for="insuranceNumber">Número da Carteirinha:</label>
+                        <input type="text" id="insuranceNumber">
+                    </div>
+                </div>
+            </section>
+
+            <section class="medical-info">
+                <h2>Informações Médicas</h2>
+                
+                <div class="codes-section">
+                    <h3>Códigos CID (Diagnóstico) <span class="required">*</span></h3>
+                    <div id="cidCodesContainer">
+                        <div class="form-group autocomplete-container">
+                            <label for="cidCode0">Código CID:</label>
+                            <input type="text" id="cidCode0" class="cid-input" placeholder="Digite para buscar código CID (ex: A00.0)" required autocomplete="off">
+                            <div id="cidSuggestions0" class="autocomplete-suggestions"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="codes-section">
+                    <h3>Códigos TUSS (Procedimentos) <span class="required">*</span></h3>
+                    <div id="tussCodesContainer">
+                        <div class="form-group autocomplete-container">
+                            <label for="tussCode0">Código TUSS:</label>
+                            <input type="text" id="tussCode0" class="tuss-input" placeholder="Digite para buscar código TUSS (ex: 10101012)" required autocomplete="off">
+                            <div id="tussSuggestions0" class="autocomplete-suggestions"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="clinicalSummary">Resumo Clínico:</label>
+                    <textarea id="clinicalSummary" rows="4" placeholder="Descreva a situação clínica do paciente..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="materials">Materiais Necessários:</label>
+                    <textarea id="materials" rows="3" placeholder="Liste os materiais necessários para o procedimento..."></textarea>
+                </div>
+            </section>
+
+            <button type="submit">Gerar Relatório</button>
+        </form>
+
+        <section id="output" class="output-section" style="display: none;">
+            <h2>Relatório Gerado</h2>
+            <div class="output-text" id="generatedReport"></div>
+            <button id="copyButton">Copiar para Área de Transferência</button>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="cid_data.js"></script>
+    <script src="tuss_data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

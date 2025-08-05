@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Data Loading</title>
+</head>
+<body>
+    <h1>Debug: Checking Data Files</h1>
+    <div id="results"></div>
+
+    <script src="cid_data.js"></script>
+    <script src="tuss_data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const results = document.getElementById('results');
+            
+            let html = '<h2>Data Loading Results:</h2>';
+            
+            if (typeof cidCodes !== 'undefined') {
+                html += `<p>✅ CID Codes: ${cidCodes.length} loaded</p>`;
+                html += `<p>Sample CID: ${cidCodes[0]?.description || 'None'}</p>`;
+            } else {
+                html += '<p>❌ CID Codes: NOT LOADED</p>';
+            }
+            
+            if (typeof tussCodes !== 'undefined') {
+                html += `<p>✅ TUSS Codes: ${tussCodes.length} loaded</p>`;
+                html += `<p>Sample TUSS: ${tussCodes[0]?.description || 'None'}</p>`;
+            } else {
+                html += '<p>❌ TUSS Codes: NOT LOADED</p>';
+            }
+            
+            // Test search functionality
+            if (typeof cidCodes !== 'undefined' && cidCodes.length > 0) {
+                const testQuery = 'colera';
+                const matches = cidCodes.filter(item => 
+                    item.code.toLowerCase().includes(testQuery) ||
+                    item.description.toLowerCase().includes(testQuery)
+                );
+                html += `<h3>Test Search "${testQuery}":</h3>`;
+                html += `<p>Found ${matches.length} matches</p>`;
+                matches.slice(0, 3).forEach(match => {
+                    html += `<p>- ${match.description}</p>`;
+                });
+            }
+            
+            results.innerHTML = html;
+        });
+    </script>
+</body>
+</html>

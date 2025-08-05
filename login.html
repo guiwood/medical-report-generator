@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gerador de Relatórios Médicos</title>
+    <link rel="stylesheet" href="auth-styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Gerador de Relatórios Médicos</h1>
+                <p>Faça login para acessar sua conta</p>
+            </div>
+
+            <div id="login-form" class="auth-form">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Senha:</label>
+                        <input type="password" id="password" required>
+                    </div>
+
+                    <button type="submit" class="auth-button">Entrar</button>
+                    
+                    <div class="auth-links">
+                        <p>Não tem conta? <a href="#" id="show-signup">Cadastre-se</a></p>
+                        <p><a href="#" id="forgot-password">Esqueceu a senha?</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <div id="signup-form" class="auth-form" style="display: none;">
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label for="signup-name">Nome Completo:</label>
+                        <input type="text" id="signup-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">Email:</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">Senha:</label>
+                        <input type="password" id="signup-password" required minlength="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doctor-name">Nome do Médico (opcional):</label>
+                        <input type="text" id="doctor-name" placeholder="Dr. João Silva">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="crm-number">CRM (opcional):</label>
+                        <input type="text" id="crm-number" placeholder="123456">
+                    </div>
+
+                    <button type="submit" class="auth-button">Cadastrar</button>
+                    
+                    <div class="auth-links">
+                        <p>Já tem conta? <a href="#" id="show-login">Faça login</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <div id="forgot-form" class="auth-form" style="display: none;">
+                <form id="forgotForm">
+                    <div class="form-group">
+                        <label for="forgot-email">Email:</label>
+                        <input type="email" id="forgot-email" required>
+                    </div>
+
+                    <button type="submit" class="auth-button">Enviar Link de Recuperação</button>
+                    
+                    <div class="auth-links">
+                        <p><a href="#" id="back-to-login">Voltar ao login</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <div id="loading" class="loading" style="display: none;">
+                <p>Carregando...</p>
+            </div>
+
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>
