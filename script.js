@@ -558,12 +558,12 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     // Build clinical sections
     let clinicalSection = '';
     if (data.clinicalSummary.trim()) {
-        clinicalSection = `\nJUSTIFICATIVA CLÍNICA:\n${data.clinicalSummary}`;
+        clinicalSection = `\n\nJUSTIFICATIVA CLÍNICA:\n${data.clinicalSummary}`;
     }
     
     let materialsSection = '';
     if (data.materials.trim()) {
-        materialsSection = `\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
+        materialsSection = `\n\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
     }
     
     // Get doctor info from profile
