@@ -5,6 +5,7 @@ let cidCounter = 0;
 let tussCounter = 0;
 let supabase;
 let currentUser = null;
+let userProfile = null;
 
 // Load codes when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -58,12 +59,14 @@ async function loadUserProfile() {
             .eq('id', currentUser.id)
             .single();
         
+        userProfile = profile;
         const userName = profile?.full_name || currentUser.email;
         document.getElementById('currentUser').textContent = userName;
         
     } catch (error) {
         console.error('Error loading profile:', error);
         document.getElementById('currentUser').textContent = currentUser.email;
+        userProfile = null;
     }
 }
 
@@ -519,6 +522,10 @@ function generateReportText(data, cidCodes, tussCodes, age) {
         materialsSection = `\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
     }
     
+    // Get doctor info from profile
+    const doctorName = userProfile?.doctor_name || 'Dr. _________________________';
+    const crmNumber = userProfile?.crm_number || '_______________________';
+    
     return `SOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
 Data: ${reportDate}
@@ -533,8 +540,8 @@ PROCEDIMENTO(S) SOLICITADO(S):
 ${tussList}${clinicalSection}${materialsSection}
 
 Atenciosamente,
-Dr. _________________________
-CRM: _______________________`;
+${doctorName}
+CRM: ${crmNumber}`;
 }
 
 function copyToClipboard() {
