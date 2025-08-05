@@ -443,7 +443,8 @@ function setupFormHandlers() {
 
 function calculateAge(birthDate) {
     const today = new Date();
-    const birth = new Date(birthDate);
+    // Fix timezone issue by adding time to avoid date shifting
+    const birth = new Date(birthDate + 'T12:00:00');
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     
@@ -516,7 +517,9 @@ async function generateReport() {
 }
 
 function generateReportText(data, cidCodes, tussCodes, age) {
-    const reportDate = data.reportDate ? new Date(data.reportDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+    const reportDate = data.reportDate ? 
+        new Date(data.reportDate + 'T12:00:00').toLocaleDateString('pt-BR') : 
+        new Date().toLocaleDateString('pt-BR');
     
     // Format CID codes
     const cidList = cidCodes.map(code => `CID: ${code.description}`).join('\n');
@@ -528,7 +531,9 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     let patientInfo = `Nome: ${data.patientName}`;
     
     if (data.patientDOB) {
-        const formattedDOB = new Date(data.patientDOB).toLocaleDateString('pt-BR');
+        // Fix timezone issue by adding time to avoid date shifting
+        const date = new Date(data.patientDOB + 'T12:00:00');
+        const formattedDOB = date.toLocaleDateString('pt-BR');
         patientInfo += `\nData de Nascimento: ${formattedDOB}`;
         if (age !== null) {
             patientInfo += `\nIdade: ${age} anos`;
