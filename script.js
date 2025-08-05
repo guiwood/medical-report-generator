@@ -84,12 +84,56 @@ async function loadTemplate(templateId) {
         if (template && template.template_data) {
             // Load template data into form
             const data = template.template_data;
+            
+            // Load regular form fields
             Object.keys(data).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.value = data[key];
+                if (key !== 'selectedCidCodes' && key !== 'selectedTussCodes') {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = data[key];
+                    }
                 }
             });
+            
+            // Load CID codes
+            if (data.selectedCidCodes && data.selectedCidCodes.length > 0) {
+                data.selectedCidCodes.forEach((cidCode, index) => {
+                    if (cidCode && cidCode.code) {
+                        selectedCidCodes[index] = cidCode;
+                        const inputElement = document.getElementById(`cidCode${index}`);
+                        if (inputElement) {
+                            inputElement.value = cidCode.description;
+                        }
+                        
+                        // Add more CID fields if needed
+                        if (index > cidCounter) {
+                            for (let i = cidCounter; i < index; i++) {
+                                addNewCidField();
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Load TUSS codes
+            if (data.selectedTussCodes && data.selectedTussCodes.length > 0) {
+                data.selectedTussCodes.forEach((tussCode, index) => {
+                    if (tussCode && tussCode.code) {
+                        selectedTussCodes[index] = tussCode;
+                        const inputElement = document.getElementById(`tussCode${index}`);
+                        if (inputElement) {
+                            inputElement.value = tussCode.description;
+                        }
+                        
+                        // Add more TUSS fields if needed
+                        if (index > tussCounter) {
+                            for (let i = tussCounter; i < index; i++) {
+                                addNewTussField();
+                            }
+                        }
+                    }
+                });
+            }
         }
         
     } catch (error) {
