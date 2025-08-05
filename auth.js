@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup event listeners
     setupEventListeners();
+    setupNumberFormatting();
 });
 
 async function checkAuthState() {
@@ -115,6 +116,8 @@ async function handleSignup(e) {
     const password = document.getElementById('signup-password').value;
     const doctorName = document.getElementById('doctor-name').value;
     const crmNumber = document.getElementById('crm-number').value;
+    const crmState = document.getElementById('crm-state').value;
+    const rqeNumber = document.getElementById('rqe-number').value;
     
     showLoading(true);
     clearMessage();
@@ -127,7 +130,9 @@ async function handleSignup(e) {
                 data: {
                     full_name: name,
                     doctor_name: doctorName,
-                    crm_number: crmNumber
+                    crm_number: crmNumber,
+                    crm_state: crmState,
+                    rqe_number: rqeNumber
                 }
             }
         });
@@ -202,4 +207,39 @@ function clearMessage() {
     const messageEl = document.getElementById('message');
     messageEl.textContent = '';
     messageEl.className = 'message';
+}
+
+function setupNumberFormatting() {
+    // Format CRM number
+    const crmInput = document.getElementById('crm-number');
+    if (crmInput) {
+        crmInput.addEventListener('input', function() {
+            formatNumberInput(this);
+        });
+    }
+    
+    // Format RQE number
+    const rqeInput = document.getElementById('rqe-number');
+    if (rqeInput) {
+        rqeInput.addEventListener('input', function() {
+            formatNumberInput(this);
+        });
+    }
+}
+
+function formatNumberInput(input) {
+    // Remove all non-digits
+    let value = input.value.replace(/\D/g, '');
+    
+    // Limit to 6 digits
+    if (value.length > 6) {
+        value = value.substring(0, 6);
+    }
+    
+    // Add dot separator for thousands
+    if (value.length > 3) {
+        value = value.substring(0, value.length - 3) + '.' + value.substring(value.length - 3);
+    }
+    
+    input.value = value;
 }

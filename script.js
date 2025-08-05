@@ -568,7 +568,18 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     
     // Get doctor info from profile
     const doctorName = userProfile?.doctor_name || 'Dr. _________________________';
-    const crmNumber = userProfile?.crm_number || '_______________________';
+    let crmInfo = '_______________________';
+    if (userProfile?.crm_number) {
+        crmInfo = userProfile.crm_number;
+        if (userProfile.crm_state) {
+            crmInfo += '/' + userProfile.crm_state;
+        }
+    }
+    
+    let rqeInfo = '';
+    if (userProfile?.rqe_number) {
+        rqeInfo = `\nRQE: ${userProfile.rqe_number}`;
+    }
     
     return `SOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
@@ -585,7 +596,7 @@ ${tussList}${clinicalSection}${materialsSection}
 
 Atenciosamente,
 ${doctorName}
-CRM: ${crmNumber}`;
+CRM: ${crmInfo}${rqeInfo}`;
 }
 
 function copyToClipboard() {

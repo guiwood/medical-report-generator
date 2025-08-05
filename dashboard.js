@@ -254,7 +254,12 @@ function showProfileModal() {
         document.getElementById('profileName').value = userProfile.full_name || '';
         document.getElementById('profileDoctorName').value = userProfile.doctor_name || '';
         document.getElementById('profileCRM').value = userProfile.crm_number || '';
+        document.getElementById('profileCRMState').value = userProfile.crm_state || '';
+        document.getElementById('profileRQE').value = userProfile.rqe_number || '';
     }
+    
+    // Setup number formatting
+    setupProfileNumberFormatting();
     
     document.getElementById('profileModal').style.display = 'flex';
 }
@@ -299,6 +304,8 @@ async function saveProfile(e) {
     const fullName = document.getElementById('profileName').value;
     const doctorName = document.getElementById('profileDoctorName').value;
     const crmNumber = document.getElementById('profileCRM').value;
+    const crmState = document.getElementById('profileCRMState').value;
+    const rqeNumber = document.getElementById('profileRQE').value;
     
     try {
         const { error } = await supabase
@@ -309,6 +316,8 @@ async function saveProfile(e) {
                 full_name: fullName,
                 doctor_name: doctorName,
                 crm_number: crmNumber,
+                crm_state: crmState,
+                rqe_number: rqeNumber,
                 updated_at: new Date().toISOString()
             });
         
@@ -386,4 +395,39 @@ async function deleteReport(reportId) {
         console.error('Error deleting report:', error);
         alert('Erro ao excluir relatório: ' + error.message);
     }
+}
+
+function setupProfileNumberFormatting() {
+    // Format CRM number
+    const crmInput = document.getElementById('profileCRM');
+    if (crmInput) {
+        crmInput.addEventListener('input', function() {
+            formatNumberInput(this);
+        });
+    }
+    
+    // Format RQE number
+    const rqeInput = document.getElementById('profileRQE');
+    if (rqeInput) {
+        rqeInput.addEventListener('input', function() {
+            formatNumberInput(this);
+        });
+    }
+}
+
+function formatNumberInput(input) {
+    // Remove all non-digits
+    let value = input.value.replace(/\D/g, '');
+    
+    // Limit to 6 digits
+    if (value.length > 6) {
+        value = value.substring(0, 6);
+    }
+    
+    // Add dot separator for thousands
+    if (value.length > 3) {
+        value = value.substring(0, value.length - 3) + '.' + value.substring(value.length - 3);
+    }
+    
+    input.value = value;
 }
