@@ -549,41 +549,41 @@ function generateReportText(data, cidCodes, tussCodes, age) {
         // Fix timezone issue by adding time to avoid date shifting
         const date = new Date(data.patientDOB + 'T12:00:00');
         const formattedDOB = date.toLocaleDateString('pt-BR');
-        patientInfo += `\n\nData de Nascimento: ${formattedDOB}`;
+        patientInfo += `\nData de Nascimento: ${formattedDOB}`;
         if (age !== null) {
-            patientInfo += `\n\nIdade: ${age} anos`;
+            patientInfo += `\nIdade: ${age} anos`;
         }
     }
     
     if (data.patientCPF.trim()) {
-        patientInfo += `\n\nCPF: ${data.patientCPF}`;
+        patientInfo += `\nCPF: ${data.patientCPF}`;
     }
     
     if (data.patientPhone.trim()) {
-        patientInfo += `\n\nTelefone: ${data.patientPhone}`;
+        patientInfo += `\nTelefone: ${data.patientPhone}`;
     }
     
     if (data.patientCare.trim()) {
-        patientInfo += `\n\nNúmero do Atendimento: ${data.patientCare}`;
+        patientInfo += `\nNúmero do Atendimento: ${data.patientCare}`;
     }
     
     if (data.insuranceProvider.trim()) {
-        patientInfo += `\n\nConvênio: ${data.insuranceProvider}`;
+        patientInfo += `\nConvênio: ${data.insuranceProvider}`;
     }
     
     if (data.insuranceNumber.trim()) {
-        patientInfo += `\n\nNúmero da Carteirinha: ${data.insuranceNumber}`;
+        patientInfo += `\nNúmero da Carteirinha: ${data.insuranceNumber}`;
     }
     
     // Build clinical sections
     let clinicalSection = '';
     if (data.clinicalSummary.trim()) {
-        clinicalSection = `\n\n\n\nJUSTIFICATIVA CLÍNICA:\n${data.clinicalSummary}`;
+        clinicalSection = `\n\nJUSTIFICATIVA CLÍNICA:\n${data.clinicalSummary}`;
     }
     
     let materialsSection = '';
     if (data.materials.trim()) {
-        materialsSection = `\n\n\n\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
+        materialsSection = `\n\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
     }
     
     // Get doctor info from profile
@@ -605,16 +605,16 @@ function generateReportText(data, cidCodes, tussCodes, age) {
 
 \n\nSOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
-\n\nIDENTIFICAÇÃO DO PACIENTE:
+\nIDENTIFICAÇÃO DO PACIENTE:
 ${patientInfo}
 
-\n\nDIAGNÓSTICO(S):
+\nDIAGNÓSTICO(S):
 ${cidList}
 
-\n\nPROCEDIMENTO(S) SOLICITADO(S):
+\nPROCEDIMENTO(S) SOLICITADO(S):
 ${tussList}${clinicalSection}${materialsSection}
 
-\n\nAtenciosamente,
+\nAtenciosamente,
 ${doctorName}
 CRM: ${crmInfo}${rqeInfo}`;
 }
