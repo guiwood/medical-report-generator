@@ -603,7 +603,7 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     
     return `${reportDate}
 
-\n\nSOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
+\nSOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
 \nIDENTIFICAÇÃO DO PACIENTE:
 ${patientInfo}
