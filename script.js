@@ -536,11 +536,11 @@ function generateReportText(data, cidCodes, tussCodes, age) {
         formatDateExtensive(data.reportDate) : 
         formatDateExtensive(new Date().toISOString().split('T')[0]);
     
-    // Format CID codes with double line breaks for better Word compatibility
-    const cidList = cidCodes.map(code => `CID: ${code.description}`).join('\n\n');
+    // Format CID codes with single line breaks
+    const cidList = cidCodes.map(code => `CID: ${code.description}`).join('\n');
     
-    // Format TUSS codes with double line breaks for better Word compatibility
-    const tussList = tussCodes.map(code => `TUSS: ${code.description}`).join('\n\n');
+    // Format TUSS codes with single line breaks
+    const tussList = tussCodes.map(code => `TUSS: ${code.description}`).join('\n');
     
     // Build patient info dynamically, only including filled fields
     let patientInfo = `Nome: ${data.patientName}`;
@@ -578,12 +578,12 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     // Build clinical sections
     let clinicalSection = '';
     if (data.clinicalSummary.trim()) {
-        clinicalSection = `\n\n\n\nJUSTIFICATIVA CLÍNICA:\n\n${data.clinicalSummary}`;
+        clinicalSection = `\n\n\n\nJUSTIFICATIVA CLÍNICA:\n${data.clinicalSummary}`;
     }
     
     let materialsSection = '';
     if (data.materials.trim()) {
-        materialsSection = `\n\n\n\nMATERIAIS NECESSÁRIOS:\n\n${data.materials}`;
+        materialsSection = `\n\n\n\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
     }
     
     // Get doctor info from profile
@@ -598,7 +598,7 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     
     let rqeInfo = '';
     if (userProfile?.rqe_number) {
-        rqeInfo = `\n\nRQE: ${userProfile.rqe_number}`;
+        rqeInfo = `\nRQE: ${userProfile.rqe_number}`;
     }
     
     return `${reportDate}
@@ -606,17 +606,17 @@ function generateReportText(data, cidCodes, tussCodes, age) {
 \n\nSOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
 \n\nIDENTIFICAÇÃO DO PACIENTE:
-\n\n${patientInfo}
+${patientInfo}
 
 \n\nDIAGNÓSTICO(S):
-\n\n${cidList}
+${cidList}
 
 \n\nPROCEDIMENTO(S) SOLICITADO(S):
-\n\n${tussList}${clinicalSection}${materialsSection}
+${tussList}${clinicalSection}${materialsSection}
 
 \n\nAtenciosamente,
-\n\n${doctorName}
-\n\nCRM: ${crmInfo}${rqeInfo}`;
+${doctorName}
+CRM: ${crmInfo}${rqeInfo}`;
 }
 
 function copyToClipboard() {
