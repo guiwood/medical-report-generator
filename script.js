@@ -608,10 +608,10 @@ function generateReportText(data, cidCodes, tussCodes, age) {
 \nIDENTIFICAÇÃO DO PACIENTE:
 ${patientInfo}
 
-\nDIAGNÓSTICO(S):
+DIAGNÓSTICO(S):
 ${cidList}
 
-\nPROCEDIMENTO(S) SOLICITADO(S):
+PROCEDIMENTO(S) SOLICITADO(S):
 ${tussList}${clinicalSection}${materialsSection}
 
 \nAtenciosamente,
