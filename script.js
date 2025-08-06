@@ -455,6 +455,21 @@ function calculateAge(birthDate) {
     return age;
 }
 
+function formatDateExtensive(dateString) {
+    const months = [
+        'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+        'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    ];
+    
+    // Fix timezone issue by adding time to avoid date shifting
+    const date = new Date(dateString + 'T12:00:00');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    
+    return `${day} de ${month} de ${year}`;
+}
+
 async function generateReport() {
     try {
         // Get form data
@@ -518,14 +533,14 @@ async function generateReport() {
 
 function generateReportText(data, cidCodes, tussCodes, age) {
     const reportDate = data.reportDate ? 
-        new Date(data.reportDate + 'T12:00:00').toLocaleDateString('pt-BR') : 
-        new Date().toLocaleDateString('pt-BR');
+        formatDateExtensive(data.reportDate) : 
+        formatDateExtensive(new Date().toISOString().split('T')[0]);
     
-    // Format CID codes
-    const cidList = cidCodes.map(code => `CID: ${code.description}`).join('\n');
+    // Format CID codes with double line breaks for better Word compatibility
+    const cidList = cidCodes.map(code => `CID: ${code.description}`).join('\n\n');
     
-    // Format TUSS codes
-    const tussList = tussCodes.map(code => `TUSS: ${code.description}`).join('\n');
+    // Format TUSS codes with double line breaks for better Word compatibility
+    const tussList = tussCodes.map(code => `TUSS: ${code.description}`).join('\n\n');
     
     // Build patient info dynamically, only including filled fields
     let patientInfo = `Nome: ${data.patientName}`;
@@ -534,41 +549,41 @@ function generateReportText(data, cidCodes, tussCodes, age) {
         // Fix timezone issue by adding time to avoid date shifting
         const date = new Date(data.patientDOB + 'T12:00:00');
         const formattedDOB = date.toLocaleDateString('pt-BR');
-        patientInfo += `\nData de Nascimento: ${formattedDOB}`;
+        patientInfo += `\n\nData de Nascimento: ${formattedDOB}`;
         if (age !== null) {
-            patientInfo += `\nIdade: ${age} anos`;
+            patientInfo += `\n\nIdade: ${age} anos`;
         }
     }
     
     if (data.patientCPF.trim()) {
-        patientInfo += `\nCPF: ${data.patientCPF}`;
+        patientInfo += `\n\nCPF: ${data.patientCPF}`;
     }
     
     if (data.patientPhone.trim()) {
-        patientInfo += `\nTelefone: ${data.patientPhone}`;
+        patientInfo += `\n\nTelefone: ${data.patientPhone}`;
     }
     
     if (data.patientCare.trim()) {
-        patientInfo += `\nNúmero do Atendimento: ${data.patientCare}`;
+        patientInfo += `\n\nNúmero do Atendimento: ${data.patientCare}`;
     }
     
     if (data.insuranceProvider.trim()) {
-        patientInfo += `\nConvênio: ${data.insuranceProvider}`;
+        patientInfo += `\n\nConvênio: ${data.insuranceProvider}`;
     }
     
     if (data.insuranceNumber.trim()) {
-        patientInfo += `\nNúmero da Carteirinha: ${data.insuranceNumber}`;
+        patientInfo += `\n\nNúmero da Carteirinha: ${data.insuranceNumber}`;
     }
     
     // Build clinical sections
     let clinicalSection = '';
     if (data.clinicalSummary.trim()) {
-        clinicalSection = `\n\nJUSTIFICATIVA CLÍNICA:\n${data.clinicalSummary}`;
+        clinicalSection = `\n\n\n\nJUSTIFICATIVA CLÍNICA:\n\n${data.clinicalSummary}`;
     }
     
     let materialsSection = '';
     if (data.materials.trim()) {
-        materialsSection = `\n\nMATERIAIS NECESSÁRIOS:\n${data.materials}`;
+        materialsSection = `\n\n\n\nMATERIAIS NECESSÁRIOS:\n\n${data.materials}`;
     }
     
     // Get doctor info from profile
@@ -583,25 +598,25 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     
     let rqeInfo = '';
     if (userProfile?.rqe_number) {
-        rqeInfo = `\nRQE: ${userProfile.rqe_number}`;
+        rqeInfo = `\n\nRQE: ${userProfile.rqe_number}`;
     }
     
-    return `SOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
+    return `${reportDate}
 
-Data: ${reportDate}
+\n\nSOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
-IDENTIFICAÇÃO DO PACIENTE:
-${patientInfo}
+\n\nIDENTIFICAÇÃO DO PACIENTE:
+\n\n${patientInfo}
 
-DIAGNÓSTICO(S):
-${cidList}
+\n\nDIAGNÓSTICO(S):
+\n\n${cidList}
 
-PROCEDIMENTO(S) SOLICITADO(S):
-${tussList}${clinicalSection}${materialsSection}
+\n\nPROCEDIMENTO(S) SOLICITADO(S):
+\n\n${tussList}${clinicalSection}${materialsSection}
 
-Atenciosamente,
-${doctorName}
-CRM: ${crmInfo}${rqeInfo}`;
+\n\nAtenciosamente,
+\n\n${doctorName}
+\n\nCRM: ${crmInfo}${rqeInfo}`;
 }
 
 function copyToClipboard() {
