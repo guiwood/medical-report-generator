@@ -7,6 +7,11 @@ let supabase;
 let currentUser = null;
 let userProfile = null;
 
+// Global variables for patient management
+let currentPatient = null;
+let allPatients = [];
+let isEditingPatient = false;
+
 // Load codes when page loads
 document.addEventListener('DOMContentLoaded', function() {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -44,6 +49,7 @@ async function checkAuthAndSetup() {
         setupPhoneFormatting();
         setDefaultReportDate();
         setupAuthenticatedFeatures();
+        setupPatientHandlers();
         
     } catch (error) {
         console.error('Error checking auth:', error);
@@ -472,6 +478,12 @@ function formatDateExtensive(dateString) {
 
 async function generateReport() {
     try {
+        // Validar se paciente foi selecionado
+        if (!currentPatient && document.getElementById('patientDataSection').style.display === 'none') {
+            alert('Por favor, selecione um paciente antes de gerar o relatório.');
+            return;
+        }
+
         // Get form data
         const formData = {
             reportDate: document.getElementById('reportDate').value,
@@ -701,4 +713,268 @@ async function saveAsTemplate() {
         console.error('Error saving template:', error);
         alert('Erro ao salvar template: ' + error.message);
     }
+}
+
+// ===== PATIENT MANAGEMENT FUNCTIONS =====
+
+function setupPatientHandlers() {
+    // Botões de seleção
+    document.getElementById('createNewPatient').addEventListener('click', showCreatePatientForm);
+    document.getElementById('selectExistingPatient').addEventListener('click', showExistingPatients);
+    
+    // Botões de ação
+    document.getElementById('changePatientBtn').addEventListener('click', resetPatientSelection);
+    document.getElementById('savePatientBtn').addEventListener('click', savePatient);
+    document.getElementById('useWithoutSavingBtn').addEventListener('click', usePatientWithoutSaving);
+    
+    // Busca de pacientes
+    document.getElementById('patientSearch').addEventListener('input', filterPatients);
+}
+
+function showCreatePatientForm() {
+    // Ocultar seção de pacientes existentes
+    document.getElementById('existingPatientsSection').style.display = 'none';
+    
+    // Mostrar seção de dados do paciente
+    document.getElementById('patientDataSection').style.display = 'block';
+    document.getElementById('patientSectionTitle').textContent = 'Novo Paciente';
+    document.getElementById('editPatientBtn').style.display = 'none';
+    document.getElementById('savePatientSection').style.display = 'block';
+    
+    // Limpar formulário
+    clearPatientForm();
+    
+    // Definir como novo paciente
+    currentPatient = null;
+    isEditingPatient = false;
+}
+
+async function showExistingPatients() {
+    // Ocultar seção de dados do paciente
+    document.getElementById('patientDataSection').style.display = 'none';
+    
+    // Mostrar seção de pacientes existentes
+    document.getElementById('existingPatientsSection').style.display = 'block';
+    
+    // Carregar pacientes
+    await loadPatients();
+    displayPatients(allPatients);
+}
+
+async function loadPatients() {
+    try {
+        const { data: patients, error } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('name');
+        
+        if (error) throw error;
+        
+        allPatients = patients || [];
+        
+    } catch (error) {
+        console.error('Error loading patients:', error);
+        allPatients = [];
+    }
+}
+
+function displayPatients(patients) {
+    const patientsList = document.getElementById('patientsList');
+    
+    if (!patients || patients.length === 0) {
+        patientsList.innerHTML = '<div class="no-patients">Nenhum paciente encontrado</div>';
+        return;
+    }
+    
+    patientsList.innerHTML = '';
+    
+    patients.forEach(patient => {
+        const patientItem = document.createElement('div');
+        patientItem.className = 'patient-item';
+        patientItem.dataset.patientId = patient.id;
+        
+        const details = [];
+        if (patient.date_of_birth) {
+            const age = calculateAge(patient.date_of_birth);
+            details.push(`${age} anos`);
+        }
+        if (patient.cpf) details.push(`CPF: ${patient.cpf}`);
+        if (patient.insurance_provider) details.push(patient.insurance_provider);
+        
+        patientItem.innerHTML = `
+            <div class="patient-name">${patient.name}</div>
+            <div class="patient-details">${details.join(' • ')}</div>
+        `;
+        
+        patientItem.addEventListener('click', () => selectPatient(patient));
+        
+        patientsList.appendChild(patientItem);
+    });
+}
+
+function selectPatient(patient) {
+    // Remover seleção anterior
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Adicionar seleção atual
+    document.querySelector(`[data-patient-id="${patient.id}"]`).classList.add('selected');
+    
+    // Definir paciente atual
+    currentPatient = patient;
+    
+    // Preencher formulário
+    fillPatientForm(patient);
+    
+    // Mostrar seção de dados
+    document.getElementById('existingPatientsSection').style.display = 'none';
+    document.getElementById('patientDataSection').style.display = 'block';
+    document.getElementById('patientSectionTitle').textContent = `Paciente: ${patient.name}`;
+    document.getElementById('editPatientBtn').style.display = 'inline-block';
+    document.getElementById('savePatientSection').style.display = 'none';
+    
+    // Desabilitar campos (modo visualização)
+    setPatientFormReadonly(true);
+}
+
+function fillPatientForm(patient) {
+    document.getElementById('patientName').value = patient.name || '';
+    document.getElementById('patientDOB').value = patient.date_of_birth || '';
+    document.getElementById('patientCPF').value = patient.cpf || '';
+    document.getElementById('patientPhone').value = patient.phone || '';
+    document.getElementById('patientCare').value = patient.default_care_number || '';
+    document.getElementById('insuranceProvider').value = patient.insurance_provider || '';
+    document.getElementById('insuranceNumber').value = patient.insurance_number || '';
+}
+
+function clearPatientForm() {
+    document.getElementById('patientName').value = '';
+    document.getElementById('patientDOB').value = '';
+    document.getElementById('patientCPF').value = '';
+    document.getElementById('patientPhone').value = '';
+    document.getElementById('patientCare').value = '';
+    document.getElementById('insuranceProvider').value = '';
+    document.getElementById('insuranceNumber').value = '';
+    
+    setPatientFormReadonly(false);
+}
+
+function setPatientFormReadonly(readonly) {
+    const fields = [
+        'patientName', 'patientDOB', 'patientCPF', 'patientPhone',
+        'patientCare', 'insuranceProvider', 'insuranceNumber'
+    ];
+    
+    fields.forEach(fieldId => {
+        document.getElementById(fieldId).readOnly = readonly;
+    });
+}
+
+function resetPatientSelection() {
+    // Ocultar todas as seções
+    document.getElementById('existingPatientsSection').style.display = 'none';
+    document.getElementById('patientDataSection').style.display = 'none';
+    
+    // Limpar seleção
+    currentPatient = null;
+    isEditingPatient = false;
+    clearPatientForm();
+}
+
+async function savePatient() {
+    try {
+        // Validar dados obrigatórios
+        const name = document.getElementById('patientName').value.trim();
+        if (!name) {
+            alert('Nome do paciente é obrigatório');
+            return;
+        }
+        
+        // Validar CPF se fornecido
+        const cpf = document.getElementById('patientCPF').value.trim();
+        if (cpf && !validateCPF(cpf)) {
+            alert('CPF informado é inválido');
+            return;
+        }
+        
+        // Preparar dados
+        const patientData = {
+            user_id: currentUser.id,
+            name: name,
+            date_of_birth: document.getElementById('patientDOB').value || null,
+            cpf: cpf || null,
+            phone: document.getElementById('patientPhone').value.trim() || null,
+            insurance_provider: document.getElementById('insuranceProvider').value.trim() || null,
+            insurance_number: document.getElementById('insuranceNumber').value.trim() || null,
+            default_care_number: document.getElementById('patientCare').value.trim() || null
+        };
+        
+        // Salvar no banco
+        const { data: savedPatient, error } = await supabase
+            .from('patients')
+            .insert(patientData)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        
+        // Definir como paciente atual
+        currentPatient = savedPatient;
+        
+        // Atualizar interface
+        document.getElementById('patientSectionTitle').textContent = `Paciente: ${savedPatient.name}`;
+        document.getElementById('editPatientBtn').style.display = 'inline-block';
+        document.getElementById('savePatientSection').style.display = 'none';
+        setPatientFormReadonly(true);
+        
+        alert('Paciente salvo com sucesso!');
+        
+    } catch (error) {
+        console.error('Error saving patient:', error);
+        alert('Erro ao salvar paciente: ' + error.message);
+    }
+}
+
+function usePatientWithoutSaving() {
+    // Validar nome obrigatório
+    const name = document.getElementById('patientName').value.trim();
+    if (!name) {
+        alert('Nome do paciente é obrigatório');
+        return;
+    }
+    
+    // Criar objeto paciente temporário
+    currentPatient = {
+        name: name,
+        date_of_birth: document.getElementById('patientDOB').value || null,
+        cpf: document.getElementById('patientCPF').value.trim() || null,
+        phone: document.getElementById('patientPhone').value.trim() || null,
+        insurance_provider: document.getElementById('insuranceProvider').value.trim() || null,
+        insurance_number: document.getElementById('insuranceNumber').value.trim() || null,
+        default_care_number: document.getElementById('patientCare').value.trim() || null
+    };
+    
+    // Atualizar interface
+    document.getElementById('patientSectionTitle').textContent = `Paciente: ${name} (não salvo)`;
+    document.getElementById('editPatientBtn').style.display = 'none';
+    document.getElementById('savePatientSection').style.display = 'none';
+    setPatientFormReadonly(true);
+}
+
+function filterPatients() {
+    const searchTerm = document.getElementById('patientSearch').value.toLowerCase();
+    
+    if (!searchTerm) {
+        displayPatients(allPatients);
+        return;
+    }
+    
+    const filteredPatients = allPatients.filter(patient => 
+        patient.name.toLowerCase().includes(searchTerm) ||
+        (patient.cpf && patient.cpf.includes(searchTerm))
+    );
+    
+    displayPatients(filteredPatients);
 }

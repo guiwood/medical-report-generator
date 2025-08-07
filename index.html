@@ -33,41 +33,77 @@
 
             <section class="patient-info">
                 <h2>Informações do Paciente</h2>
-                <div class="form-group">
-                    <label for="patientName">Nome Completo: <span class="required">*</span></label>
-                    <input type="text" id="patientName" required>
-                </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="patientDOB">Data de Nascimento:</label>
-                        <input type="date" id="patientDOB">
-                    </div>
-                    <div class="form-group">
-                        <label for="patientCPF">CPF:</label>
-                        <input type="text" id="patientCPF" placeholder="000.000.000-00" maxlength="14">
-                        <div class="validation-message" id="cpfValidation"></div>
+                <!-- Seleção de Paciente -->
+                <div class="patient-selection">
+                    <div class="patient-buttons">
+                        <button type="button" id="createNewPatient" class="btn btn-primary">Criar Novo Paciente</button>
+                        <button type="button" id="selectExistingPatient" class="btn btn-secondary">Usar Paciente Existente</button>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="patientPhone">Telefone:</label>
-                    <input type="tel" id="patientPhone" placeholder="(11) 99999-9999">
-                </div>
-
-                <div class="form-group">
-                    <label for="patientCare">Número do Atendimento:</label>
-                    <input type="text" id="patientCare" placeholder="Ex: 123456">
-                </div>
-
-                <div class="form-row">
+                <!-- Lista de Pacientes Existentes (oculta inicialmente) -->
+                <div id="existingPatientsSection" class="existing-patients" style="display: none;">
+                    <h3>Selecionar Paciente</h3>
                     <div class="form-group">
-                        <label for="insuranceProvider">Convênio:</label>
-                        <input type="text" id="insuranceProvider" placeholder="Nome do convênio">
+                        <label for="patientSearch">Buscar paciente:</label>
+                        <input type="text" id="patientSearch" placeholder="Digite o nome do paciente...">
                     </div>
+                    <div id="patientsList" class="patients-list"></div>
+                </div>
+
+                <!-- Dados do Paciente Selecionado/Novo -->
+                <div id="patientDataSection" class="patient-data" style="display: none;">
+                    <div class="selected-patient-info">
+                        <h3 id="patientSectionTitle">Dados do Paciente</h3>
+                        <div class="patient-actions">
+                            <button type="button" id="editPatientBtn" class="btn btn-small" style="display: none;">Editar Paciente</button>
+                            <button type="button" id="changePatientBtn" class="btn btn-small">Trocar Paciente</button>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="insuranceNumber">Número da Carteirinha:</label>
-                        <input type="text" id="insuranceNumber">
+                        <label for="patientName">Nome Completo: <span class="required">*</span></label>
+                        <input type="text" id="patientName" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patientDOB">Data de Nascimento:</label>
+                            <input type="date" id="patientDOB">
+                        </div>
+                        <div class="form-group">
+                            <label for="patientCPF">CPF:</label>
+                            <input type="text" id="patientCPF" placeholder="000.000.000-00" maxlength="14">
+                            <div class="validation-message" id="cpfValidation"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="patientPhone">Telefone:</label>
+                        <input type="tel" id="patientPhone" placeholder="(11) 99999-9999">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="patientCare">Número do Atendimento:</label>
+                        <input type="text" id="patientCare" placeholder="Ex: 123456">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="insuranceProvider">Convênio:</label>
+                            <input type="text" id="insuranceProvider" placeholder="Nome do convênio">
+                        </div>
+                        <div class="form-group">
+                            <label for="insuranceNumber">Número da Carteirinha:</label>
+                            <input type="text" id="insuranceNumber">
+                        </div>
+                    </div>
+
+                    <!-- Botões para salvar novo paciente -->
+                    <div id="savePatientSection" class="save-patient-section" style="display: none;">
+                        <button type="button" id="savePatientBtn" class="btn btn-success">Salvar Paciente</button>
+                        <button type="button" id="useWithoutSavingBtn" class="btn btn-outline">Usar sem Salvar</button>
                     </div>
                 </div>
             </section>
