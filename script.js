@@ -1156,16 +1156,24 @@ async function saveCurrentReport() {
     }
 
     try {
+        console.log('Starting save process...');
         const formData = collectFormData();
+        console.log('Form data collected:', formData);
+        
         const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
         const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
+        console.log('Valid CID codes:', validCidCodes.length);
+        console.log('Valid TUSS codes:', validTussCodes.length);
+        
         const reportText = document.getElementById('generatedReport').textContent;
+        console.log('Report text length:', reportText.length);
 
         // Generate report name automatically
         const patientName = formData.patientName || 'Sem paciente';
         const reportDate = formData.reportDate || new Date().toISOString().split('T')[0];
         const formattedDate = new Date(reportDate + 'T12:00:00').toLocaleDateString('pt-BR');
         const reportName = `${patientName} - ${formattedDate}`;
+        console.log('Generated report name:', reportName);
 
         // Simplified data structure - name column should now be available
         const reportData = {
@@ -1188,18 +1196,90 @@ async function saveCurrentReport() {
             }),
             generated_text: reportText
         };
-
-        const { data: savedReport, error } = await supabase
-            .from('reports')
-            .insert(reportData)
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Supabase error:', error);
-            throw error;
+        console.log('Report data prepared, calling Supabase...');
+        
+        // First, let's verify we have a valid session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        console.log('Current session:', sessionData);
+        if (sessionError) {
+            console.error('Session error:', sessionError);
+            throw new Error('Problema de autenticação. Faça login novamente.');
         }
 
+        // Try the insert operation with fallback strategies
+        console.log('Attempting to insert report...');
+        let savedReport = null;
+        let insertError = null;
+        
+        try {
+            // First attempt - standard insert with select
+            console.log('Method 1: Standard insert with select...');
+            const result1 = await supabase
+                .from('reports')
+                .insert(reportData)
+                .select()
+                .single();
+            
+            savedReport = result1.data;
+            insertError = result1.error;
+            
+        } catch (firstError) {
+            console.log('Method 1 failed, trying method 2...');
+            console.error('First error:', firstError);
+            
+            try {
+                // Second attempt - insert without select, then query
+                console.log('Method 2: Insert then query...');
+                const insertResult = await supabase
+                    .from('reports')
+                    .insert(reportData);
+                
+                if (!insertResult.error) {
+                    // Now query to get the inserted record
+                    const queryResult = await supabase
+                        .from('reports')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .eq('name', reportData.name)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .single();
+                    
+                    savedReport = queryResult.data;
+                    insertError = queryResult.error;
+                } else {
+                    insertError = insertResult.error;
+                }
+                
+            } catch (secondError) {
+                console.log('Method 2 also failed...');
+                console.error('Second error:', secondError);
+                insertError = secondError;
+            }
+        }
+
+        console.log('Final result - data:', savedReport);
+        console.log('Final result - error:', insertError);
+
+        if (insertError) {
+            console.error('Supabase error details:', insertError);
+            console.error('Error code:', insertError.code);
+            console.error('Error hint:', insertError.hint);
+            console.error('Error details:', insertError.details);
+            
+            // If it's a fetch error, it might be a network or CORS issue
+            if (insertError.message && insertError.message.includes('Failed to fetch')) {
+                throw new Error('Problema de conectividade com o banco de dados. Verifique sua conexão e tente novamente.');
+            }
+            
+            throw insertError;
+        }
+        
+        if (!savedReport) {
+            throw new Error('Relatório foi salvo mas não foi possível recuperar os dados.');
+        }
+
+        console.log('Report saved successfully, updating UI...');
         currentReport = savedReport;
         isEditingExistingReport = true;
         
@@ -1209,9 +1289,13 @@ async function saveCurrentReport() {
         document.getElementById('updateExistingReportBtn').style.display = 'inline-block';
 
         alert('Relatório salvo com sucesso!');
+        console.log('Save process completed successfully');
 
     } catch (error) {
-        console.error('Error saving report:', error);
+        console.error('Error saving report - full details:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
         alert('Erro ao salvar relatório: ' + (error.message || 'Erro desconhecido'));
     }
 }
