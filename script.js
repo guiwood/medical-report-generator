@@ -12,6 +12,10 @@ let currentPatient = null;
 let allPatients = [];
 let isEditingPatient = false;
 
+// Global variables for page navigation
+let currentPage = 1;
+const totalPages = 3;
+
 // Load codes when page loads
 document.addEventListener('DOMContentLoaded', function() {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -50,6 +54,7 @@ async function checkAuthAndSetup() {
         setDefaultReportDate();
         setupAuthenticatedFeatures();
         setupPatientHandlers();
+        setupPageNavigation();
         
     } catch (error) {
         console.error('Error checking auth:', error);
@@ -434,13 +439,7 @@ function setupPhoneFormatting() {
 }
 
 function setupFormHandlers() {
-    const form = document.getElementById('reportForm');
     const copyButton = document.getElementById('copyButton');
-
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        await generateReport();
-    });
 
     copyButton.addEventListener('click', function() {
         copyToClipboard();
@@ -977,4 +976,171 @@ function filterPatients() {
     );
     
     displayPatients(filteredPatients);
+}
+
+// ===== PAGE NAVIGATION FUNCTIONS =====
+
+function setupPageNavigation() {
+    // Navigation buttons
+    document.getElementById('nextToPage2').addEventListener('click', async () => {
+        if (await validateCurrentPage()) {
+            goToPage(2);
+        }
+    });
+    document.getElementById('nextToPage3').addEventListener('click', async () => {
+        if (await validateCurrentPage()) {
+            await generateReport();
+            goToPage(3);
+        }
+    });
+    document.getElementById('backToPage1').addEventListener('click', () => goToPage(1));
+    document.getElementById('backToPage2').addEventListener('click', () => goToPage(2));
+    document.getElementById('startNewReport').addEventListener('click', startNewReport);
+}
+
+function goToPage(pageNumber) {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    
+    // Update current page
+    const previousPage = currentPage;
+    currentPage = pageNumber;
+    
+    // Update progress bar
+    updateProgressBar();
+    
+    // Update page visibility with animation
+    animateToPage(previousPage, currentPage);
+}
+
+function updateProgressBar() {
+    const steps = document.querySelectorAll('.progress-step');
+    
+    steps.forEach((step, index) => {
+        const stepNumber = index + 1;
+        step.classList.remove('active', 'completed');
+        
+        if (stepNumber === currentPage) {
+            step.classList.add('active');
+        } else if (stepNumber < currentPage) {
+            step.classList.add('completed');
+        }
+    });
+}
+
+function animateToPage(fromPage, toPage) {
+    // fromPage parameter kept for potential future animation enhancements
+    const pages = document.querySelectorAll('.form-page');
+    
+    // Remove all classes first
+    pages.forEach(page => {
+        page.classList.remove('active', 'prev');
+    });
+    
+    // Set current page as active
+    const currentPageElement = document.getElementById(`page${toPage}`);
+    if (currentPageElement) {
+        currentPageElement.classList.add('active');
+    }
+    
+    // Set pages that are before current as prev
+    for (let i = 1; i < toPage; i++) {
+        const pageElement = document.getElementById(`page${i}`);
+        if (pageElement) {
+            pageElement.classList.add('prev');
+        }
+    }
+}
+
+async function validateCurrentPage() {
+    if (currentPage === 1) {
+        // Validate patient selection
+        if (!currentPatient && document.getElementById('patientDataSection').style.display === 'none') {
+            alert('Por favor, selecione um paciente antes de continuar.');
+            return false;
+        }
+        
+        // Validate patient name
+        const patientName = document.getElementById('patientName').value.trim();
+        if (!patientName) {
+            alert('Por favor, preencha o nome do paciente.');
+            return false;
+        }
+        
+        // Validate CPF if provided
+        const patientCPF = document.getElementById('patientCPF').value.trim();
+        if (patientCPF && !validateCPF(patientCPF)) {
+            alert('CPF informado é inválido. Deixe em branco se não souber ou corrija o CPF.');
+            return false;
+        }
+    }
+    
+    if (currentPage === 2) {
+        // Validate CID/TUSS codes
+        const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
+        const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
+        
+        if (validCidCodes.length === 0 || validTussCodes.length === 0) {
+            alert('Por favor, selecione pelo menos um código CID e um código TUSS válidos.');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function startNewReport() {
+    // Reset everything
+    currentPage = 1;
+    currentPatient = null;
+    isEditingPatient = false;
+    selectedCidCodes = [];
+    selectedTussCodes = [];
+    cidCounter = 0;
+    tussCounter = 0;
+    
+    // Clear all forms
+    document.getElementById('reportForm').reset();
+    clearPatientForm();
+    resetPatientSelection();
+    
+    // Clear CID/TUSS containers and recreate first fields
+    document.getElementById('cidCodesContainer').innerHTML = `
+        <div class="form-group autocomplete-container">
+            <label for="cidCode0">Código CID:</label>
+            <input type="text" id="cidCode0" class="cid-input" placeholder="Digite para buscar código CID (ex: A00.0)" autocomplete="off">
+            <div id="cidSuggestions0" class="autocomplete-suggestions"></div>
+        </div>
+    `;
+    
+    document.getElementById('tussCodesContainer').innerHTML = `
+        <div class="form-group autocomplete-container">
+            <label for="tussCode0">Código TUSS:</label>
+            <input type="text" id="tussCode0" class="tuss-input" placeholder="Digite para buscar código TUSS (ex: 10101012)" autocomplete="off">
+            <div id="tussSuggestions0" class="autocomplete-suggestions"></div>
+        </div>
+    `;
+    
+    // Reinitialize autocomplete
+    setupAutocompleteField(
+        document.getElementById('cidCode0'),
+        document.getElementById('cidSuggestions0'),
+        cidCodes,
+        (selectedItem) => handleCidSelection(0, selectedItem)
+    );
+    
+    setupAutocompleteField(
+        document.getElementById('tussCode0'),
+        document.getElementById('tussSuggestions0'),
+        tussCodes,
+        (selectedItem) => handleTussSelection(0, selectedItem)
+    );
+    
+    // Clear report output
+    document.getElementById('generatedReport').textContent = '';
+    
+    // Set default date
+    setDefaultReportDate();
+    
+    // Go to page 1
+    goToPage(1);
 }

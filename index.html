@@ -22,16 +22,37 @@
             </div>
         </header>
 
-        <form id="reportForm">
-            <section class="report-info">
-                <h2>Informações do Relatório</h2>
-                <div class="form-group">
-                    <label for="reportDate">Data do Relatório:</label>
-                    <input type="date" id="reportDate">
-                </div>
-            </section>
+        <!-- Progress indicator -->
+        <div class="progress-bar">
+            <div class="progress-step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-title">Paciente</div>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-title">Dados Clínicos</div>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-title">Relatório</div>
+            </div>
+        </div>
 
-            <section class="patient-info">
+        <!-- Sliding form container -->
+        <div class="form-slider">
+            <form id="reportForm">
+                <!-- Page 1: Patient and Report Info -->
+                <div class="form-page active" id="page1">
+                    <div class="page-content">
+                        <section class="report-info">
+                            <h2>Informações do Relatório</h2>
+                            <div class="form-group">
+                                <label for="reportDate">Data do Relatório:</label>
+                                <input type="date" id="reportDate">
+                            </div>
+                        </section>
+
+                        <section class="patient-info">
                 <h2>Informações do Paciente</h2>
                 
                 <!-- Seleção de Paciente -->
@@ -107,6 +128,20 @@
                     </div>
                 </div>
             </section>
+                    </div>
+                    
+                    <!-- Navigation button -->
+                    <div class="page-navigation">
+                        <button type="button" class="btn btn-next" id="nextToPage2">
+                            Próximo: Dados Clínicos
+                            <span class="arrow">→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Page 2: Medical Info -->
+                <div class="form-page" id="page2">
+                    <div class="page-content">
 
             <section class="medical-info">
                 <h2>Informações Médicas</h2>
@@ -143,15 +178,47 @@
                     <textarea id="materials" rows="3" placeholder="Liste os materiais necessários para o procedimento..."></textarea>
                 </div>
             </section>
+                    </div>
+                    
+                    <!-- Navigation buttons -->
+                    <div class="page-navigation">
+                        <button type="button" class="btn btn-back" id="backToPage1">
+                            <span class="arrow">←</span>
+                            Voltar
+                        </button>
+                        <button type="button" class="btn btn-next" id="nextToPage3">
+                            Gerar Relatório
+                            <span class="arrow">→</span>
+                        </button>
+                    </div>
+                </div>
 
-            <button type="submit">Gerar Relatório</button>
-        </form>
-
-        <section id="output" class="output-section" style="display: none;">
-            <h2>Relatório Gerado</h2>
-            <div class="output-text" id="generatedReport"></div>
-            <button id="copyButton">Copiar para Área de Transferência</button>
-        </section>
+                <!-- Page 3: Generated Report -->
+                <div class="form-page" id="page3">
+                    <div class="page-content">
+                        <section id="output" class="output-section">
+                            <h2>Relatório Gerado</h2>
+                            <div class="output-text" id="generatedReport"></div>
+                            <div class="report-actions">
+                                <button id="copyButton" class="btn btn-primary">Copiar para Área de Transferência</button>
+                            </div>
+                        </section>
+                    </div>
+                    
+                    <!-- Navigation buttons -->
+                    <div class="page-navigation">
+                        <button type="button" class="btn btn-back" id="backToPage2">
+                            <span class="arrow">←</span>
+                            Voltar para Editar
+                        </button>
+                        <button type="button" class="btn btn-success" id="startNewReport">
+                            <span class="arrow">+</span>
+                            Novo Relatório
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
