@@ -603,9 +603,9 @@ function generateReportText(data, cidCodes, tussCodes, age) {
     
     return `${reportDate}
 
-\nSOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
+SOLICITAÇÃO DE AUTORIZAÇÃO PARA PROCEDIMENTO MÉDICO
 
-\nIDENTIFICAÇÃO DO PACIENTE:
+IDENTIFICAÇÃO DO PACIENTE:
 ${patientInfo}
 
 DIAGNÓSTICO(S):
@@ -614,7 +614,7 @@ ${cidList}
 PROCEDIMENTO(S) SOLICITADO(S):
 ${tussList}${clinicalSection}${materialsSection}
 
-\nAtenciosamente,
+Atenciosamente,
 ${doctorName}
 CRM: ${crmInfo}${rqeInfo}`;
 }
