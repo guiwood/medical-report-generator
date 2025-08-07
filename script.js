@@ -1154,24 +1154,37 @@ async function saveCurrentReport() {
         return;
     }
 
-    const reportName = prompt('Nome do relatório:');
-    if (!reportName || !reportName.trim()) return;
-
     try {
         const formData = collectFormData();
         const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
         const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
         const reportText = document.getElementById('generatedReport').textContent;
 
+        // Generate report name automatically
+        const patientName = formData.patientName || 'Sem paciente';
+        const reportDate = formData.reportDate || new Date().toISOString().split('T')[0];
+        const formattedDate = new Date(reportDate + 'T12:00:00').toLocaleDateString('pt-BR');
+        const reportName = `${patientName} - ${formattedDate}`;
+
+        // Simplify data structure to avoid fetch errors
         const reportData = {
             user_id: currentUser.id,
-            name: reportName.trim(),
-            patient_name: formData.patientName || 'Sem paciente definido',
-            report_data: {
-                ...formData,
-                selectedCidCodes: validCidCodes,
-                selectedTussCodes: validTussCodes
-            },
+            name: reportName,
+            patient_name: patientName,
+            report_data: JSON.stringify({
+                reportDate: formData.reportDate,
+                patientName: formData.patientName,
+                patientDOB: formData.patientDOB,
+                patientCPF: formData.patientCPF,
+                patientPhone: formData.patientPhone,
+                patientCare: formData.patientCare,
+                insuranceProvider: formData.insuranceProvider,
+                insuranceNumber: formData.insuranceNumber,
+                clinicalSummary: formData.clinicalSummary,
+                materials: formData.materials,
+                cidCodes: validCidCodes,
+                tussCodes: validTussCodes
+            }),
             generated_text: reportText
         };
 
@@ -1181,7 +1194,10 @@ async function saveCurrentReport() {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+        }
 
         currentReport = savedReport;
         isEditingExistingReport = true;
@@ -1195,29 +1211,42 @@ async function saveCurrentReport() {
 
     } catch (error) {
         console.error('Error saving report:', error);
-        alert('Erro ao salvar relatório: ' + error.message);
+        alert('Erro ao salvar relatório: ' + (error.message || 'Erro desconhecido'));
     }
 }
 
 async function saveAsNewReport() {
-    const reportName = prompt('Nome do novo relatório:');
-    if (!reportName || !reportName.trim()) return;
-
     try {
         const formData = collectFormData();
         const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
         const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
         const reportText = document.getElementById('generatedReport').textContent;
 
+        // Generate report name automatically with timestamp to ensure uniqueness
+        const patientName = formData.patientName || 'Sem paciente';
+        const reportDate = formData.reportDate || new Date().toISOString().split('T')[0];
+        const formattedDate = new Date(reportDate + 'T12:00:00').toLocaleDateString('pt-BR');
+        const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const reportName = `${patientName} - ${formattedDate} (${timestamp})`;
+
         const reportData = {
             user_id: currentUser.id,
-            name: reportName.trim(),
-            patient_name: formData.patientName || 'Sem paciente definido',
-            report_data: {
-                ...formData,
-                selectedCidCodes: validCidCodes,
-                selectedTussCodes: validTussCodes
-            },
+            name: reportName,
+            patient_name: patientName,
+            report_data: JSON.stringify({
+                reportDate: formData.reportDate,
+                patientName: formData.patientName,
+                patientDOB: formData.patientDOB,
+                patientCPF: formData.patientCPF,
+                patientPhone: formData.patientPhone,
+                patientCare: formData.patientCare,
+                insuranceProvider: formData.insuranceProvider,
+                insuranceNumber: formData.insuranceNumber,
+                clinicalSummary: formData.clinicalSummary,
+                materials: formData.materials,
+                cidCodes: validCidCodes,
+                tussCodes: validTussCodes
+            }),
             generated_text: reportText
         };
 
@@ -1227,14 +1256,17 @@ async function saveAsNewReport() {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+        }
 
         currentReport = savedReport;
         alert('Novo relatório salvo com sucesso!');
 
     } catch (error) {
         console.error('Error saving new report:', error);
-        alert('Erro ao salvar novo relatório: ' + error.message);
+        alert('Erro ao salvar novo relatório: ' + (error.message || 'Erro desconhecido'));
     }
 }
 
@@ -1253,15 +1285,30 @@ async function updateExistingReport() {
         const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
         const reportText = document.getElementById('generatedReport').textContent;
 
+        // Update name based on new patient data
+        const patientName = formData.patientName || 'Sem paciente';
+        const reportDate = formData.reportDate || new Date().toISOString().split('T')[0];
+        const formattedDate = new Date(reportDate + 'T12:00:00').toLocaleDateString('pt-BR');
+        const updatedName = `${patientName} - ${formattedDate}`;
+
         const updateData = {
-            patient_name: formData.patientName || 'Sem paciente definido',
-            report_data: {
-                ...formData,
-                selectedCidCodes: validCidCodes,
-                selectedTussCodes: validTussCodes
-            },
-            generated_text: reportText,
-            updated_at: new Date().toISOString()
+            name: updatedName,
+            patient_name: patientName,
+            report_data: JSON.stringify({
+                reportDate: formData.reportDate,
+                patientName: formData.patientName,
+                patientDOB: formData.patientDOB,
+                patientCPF: formData.patientCPF,
+                patientPhone: formData.patientPhone,
+                patientCare: formData.patientCare,
+                insuranceProvider: formData.insuranceProvider,
+                insuranceNumber: formData.insuranceNumber,
+                clinicalSummary: formData.clinicalSummary,
+                materials: formData.materials,
+                cidCodes: validCidCodes,
+                tussCodes: validTussCodes
+            }),
+            generated_text: reportText
         };
 
         const { error } = await supabase
@@ -1270,13 +1317,19 @@ async function updateExistingReport() {
             .eq('id', currentReport.id)
             .eq('user_id', currentUser.id);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+        }
 
+        // Update current report object
+        currentReport.name = updatedName;
+        
         alert('Relatório atualizado com sucesso!');
 
     } catch (error) {
         console.error('Error updating report:', error);
-        alert('Erro ao atualizar relatório: ' + error.message);
+        alert('Erro ao atualizar relatório: ' + (error.message || 'Erro desconhecido'));
     }
 }
 
@@ -1420,7 +1473,10 @@ async function loadReport(report) {
         currentReport = report;
         isEditingExistingReport = true;
         
-        const data = report.report_data;
+        // Parse report data (it's stored as JSON string)
+        const data = typeof report.report_data === 'string' 
+            ? JSON.parse(report.report_data) 
+            : report.report_data;
         
         // Load form data
         document.getElementById('reportDate').value = data.reportDate || '';
@@ -1439,8 +1495,8 @@ async function loadReport(report) {
         selectedTussCodes = [];
 
         // Load CID codes
-        if (data.selectedCidCodes) {
-            data.selectedCidCodes.forEach((code, index) => {
+        if (data.cidCodes && data.cidCodes.length > 0) {
+            data.cidCodes.forEach((code, index) => {
                 selectedCidCodes[index] = code;
                 if (index > cidCounter) {
                     for (let i = cidCounter; i < index; i++) {
@@ -1455,8 +1511,8 @@ async function loadReport(report) {
         }
 
         // Load TUSS codes
-        if (data.selectedTussCodes) {
-            data.selectedTussCodes.forEach((code, index) => {
+        if (data.tussCodes && data.tussCodes.length > 0) {
+            data.tussCodes.forEach((code, index) => {
                 selectedTussCodes[index] = code;
                 if (index > tussCounter) {
                     for (let i = tussCounter; i < index; i++) {
