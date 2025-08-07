@@ -16,6 +16,7 @@
                 </div>
                 <div class="header-right">
                     <span id="currentUser">Carregando...</span>
+                    <button id="openSavedReport" class="header-btn">Abrir Relatório</button>
                     <button id="backToDashboard" class="header-btn">← Dashboard</button>
                     <button id="saveAsTemplate" class="header-btn">Salvar como Template</button>
                 </div>
@@ -201,6 +202,11 @@
                             <div class="output-text" id="generatedReport"></div>
                             <div class="report-actions">
                                 <button id="copyButton" class="btn btn-primary">Copiar para Área de Transferência</button>
+                                <div class="save-options">
+                                    <button id="saveReportBtn" class="btn btn-success">Salvar Relatório</button>
+                                    <button id="saveAsNewReportBtn" class="btn btn-outline" style="display: none;">Salvar como Novo</button>
+                                    <button id="updateExistingReportBtn" class="btn btn-warning" style="display: none;">Atualizar Existente</button>
+                                </div>
                             </div>
                         </section>
                     </div>

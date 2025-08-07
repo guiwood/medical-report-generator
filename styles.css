@@ -356,6 +356,24 @@ body {
     text-align: center;
 }
 
+.save-options {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+    border: none;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+}
+
 .output-section {
     display: block !important;
 }
@@ -389,6 +407,117 @@ body {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    color: #6c757d;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.report-item {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.report-item:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.report-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #212529;
+    margin-bottom: 8px;
+}
+
+.report-details {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 12px;
+}
+
+.report-details span {
+    margin-right: 20px;
+}
+
+.report-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.report-item .btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
 }
 
 .container {

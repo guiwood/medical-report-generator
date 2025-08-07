@@ -16,6 +16,10 @@ let isEditingPatient = false;
 let currentPage = 1;
 const totalPages = 3;
 
+// Global variables for report management
+let currentReport = null;
+let isEditingExistingReport = false;
+
 // Load codes when page loads
 document.addEventListener('DOMContentLoaded', function() {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -55,6 +59,7 @@ async function checkAuthAndSetup() {
         setupAuthenticatedFeatures();
         setupPatientHandlers();
         setupPageNavigation();
+        setupReportHandlers();
         
     } catch (error) {
         console.error('Error checking auth:', error);
@@ -497,26 +502,15 @@ async function generateReport() {
             materials: document.getElementById('materials').value
         };
 
-        // Validate mandatory fields
-        if (!formData.patientName.trim()) {
-            alert('Por favor, preencha o nome do paciente.');
-            return;
-        }
-
         // Validate CPF only if provided
         if (formData.patientCPF.trim() && !validateCPF(formData.patientCPF)) {
             alert('CPF informado é inválido. Deixe em branco se não souber ou corrija o CPF.');
             return;
         }
 
-        // Validate that at least one CID and TUSS code are selected
+        // Get codes (allow empty for templates)
         const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
         const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
-        
-        if (validCidCodes.length === 0 || validTussCodes.length === 0) {
-            alert('Por favor, selecione pelo menos um código CID e um código TUSS válidos.');
-            return;
-        }
 
         // Calculate age from DOB
         const age = formData.patientDOB ? calculateAge(formData.patientDOB) : null;
@@ -527,14 +521,6 @@ async function generateReport() {
         // Display report
         document.getElementById('generatedReport').textContent = report;
         document.getElementById('output').style.display = 'block';
-        
-        // Save report to database
-        if (currentUser) {
-            await saveReport(formData, validCidCodes, validTussCodes, report);
-        }
-        
-        // Scroll to output
-        document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
         
     } catch (error) {
         console.error('Error generating report:', error);
@@ -1053,35 +1039,35 @@ function animateToPage(fromPage, toPage) {
 
 async function validateCurrentPage() {
     if (currentPage === 1) {
-        // Validate patient selection
-        if (!currentPatient && document.getElementById('patientDataSection').style.display === 'none') {
-            alert('Por favor, selecione um paciente antes de continuar.');
-            return false;
-        }
+        // If patient section is visible, validate patient data
+        const patientDataVisible = document.getElementById('patientDataSection').style.display !== 'none';
         
-        // Validate patient name
-        const patientName = document.getElementById('patientName').value.trim();
-        if (!patientName) {
-            alert('Por favor, preencha o nome do paciente.');
-            return false;
+        if (patientDataVisible) {
+            // Validate patient name if data is filled
+            const patientName = document.getElementById('patientName').value.trim();
+            if (patientName) {
+                // Validate CPF if provided
+                const patientCPF = document.getElementById('patientCPF').value.trim();
+                if (patientCPF && !validateCPF(patientCPF)) {
+                    alert('CPF informado é inválido. Deixe em branco se não souber ou corrija o CPF.');
+                    return false;
+                }
+            }
         }
-        
-        // Validate CPF if provided
-        const patientCPF = document.getElementById('patientCPF').value.trim();
-        if (patientCPF && !validateCPF(patientCPF)) {
-            alert('CPF informado é inválido. Deixe em branco se não souber ou corrija o CPF.');
-            return false;
-        }
+        // Allow advancing without patient data for template creation
     }
     
     if (currentPage === 2) {
-        // Validate CID/TUSS codes
+        // Validate CID/TUSS codes only if we're generating a real report (not template)
         const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
         const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
         
         if (validCidCodes.length === 0 || validTussCodes.length === 0) {
-            alert('Por favor, selecione pelo menos um código CID e um código TUSS válidos.');
-            return false;
+            // Show warning but allow proceeding for templates
+            const proceed = confirm('Nenhum código CID ou TUSS foi selecionado. Deseja continuar mesmo assim? (útil para criação de templates)');
+            if (!proceed) {
+                return false;
+            }
         }
     }
     
@@ -1093,6 +1079,8 @@ function startNewReport() {
     currentPage = 1;
     currentPatient = null;
     isEditingPatient = false;
+    currentReport = null;
+    isEditingExistingReport = false;
     selectedCidCodes = [];
     selectedTussCodes = [];
     cidCounter = 0;
@@ -1138,9 +1126,385 @@ function startNewReport() {
     // Clear report output
     document.getElementById('generatedReport').textContent = '';
     
+    // Reset report save buttons
+    document.getElementById('saveReportBtn').style.display = 'inline-block';
+    document.getElementById('saveAsNewReportBtn').style.display = 'none';
+    document.getElementById('updateExistingReportBtn').style.display = 'none';
+    
     // Set default date
     setDefaultReportDate();
     
     // Go to page 1
     goToPage(1);
+}
+
+// ===== REPORT MANAGEMENT FUNCTIONS =====
+
+function setupReportHandlers() {
+    // Report action buttons
+    document.getElementById('saveReportBtn').addEventListener('click', saveCurrentReport);
+    document.getElementById('saveAsNewReportBtn').addEventListener('click', saveAsNewReport);
+    document.getElementById('updateExistingReportBtn').addEventListener('click', updateExistingReport);
+    document.getElementById('openSavedReport').addEventListener('click', showSavedReportsList);
+}
+
+async function saveCurrentReport() {
+    if (!currentUser) {
+        alert('Você precisa estar logado para salvar relatórios.');
+        return;
+    }
+
+    const reportName = prompt('Nome do relatório:');
+    if (!reportName || !reportName.trim()) return;
+
+    try {
+        const formData = collectFormData();
+        const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
+        const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
+        const reportText = document.getElementById('generatedReport').textContent;
+
+        const reportData = {
+            user_id: currentUser.id,
+            name: reportName.trim(),
+            patient_name: formData.patientName || 'Sem paciente definido',
+            report_data: {
+                ...formData,
+                selectedCidCodes: validCidCodes,
+                selectedTussCodes: validTussCodes
+            },
+            generated_text: reportText
+        };
+
+        const { data: savedReport, error } = await supabase
+            .from('reports')
+            .insert(reportData)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        currentReport = savedReport;
+        isEditingExistingReport = true;
+        
+        // Show update options
+        document.getElementById('saveReportBtn').style.display = 'none';
+        document.getElementById('saveAsNewReportBtn').style.display = 'inline-block';
+        document.getElementById('updateExistingReportBtn').style.display = 'inline-block';
+
+        alert('Relatório salvo com sucesso!');
+
+    } catch (error) {
+        console.error('Error saving report:', error);
+        alert('Erro ao salvar relatório: ' + error.message);
+    }
+}
+
+async function saveAsNewReport() {
+    const reportName = prompt('Nome do novo relatório:');
+    if (!reportName || !reportName.trim()) return;
+
+    try {
+        const formData = collectFormData();
+        const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
+        const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
+        const reportText = document.getElementById('generatedReport').textContent;
+
+        const reportData = {
+            user_id: currentUser.id,
+            name: reportName.trim(),
+            patient_name: formData.patientName || 'Sem paciente definido',
+            report_data: {
+                ...formData,
+                selectedCidCodes: validCidCodes,
+                selectedTussCodes: validTussCodes
+            },
+            generated_text: reportText
+        };
+
+        const { data: savedReport, error } = await supabase
+            .from('reports')
+            .insert(reportData)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        currentReport = savedReport;
+        alert('Novo relatório salvo com sucesso!');
+
+    } catch (error) {
+        console.error('Error saving new report:', error);
+        alert('Erro ao salvar novo relatório: ' + error.message);
+    }
+}
+
+async function updateExistingReport() {
+    if (!currentReport) {
+        alert('Nenhum relatório selecionado para atualizar.');
+        return;
+    }
+
+    const confirm = window.confirm(`Tem certeza que deseja atualizar o relatório "${currentReport.name}"?`);
+    if (!confirm) return;
+
+    try {
+        const formData = collectFormData();
+        const validCidCodes = selectedCidCodes.filter(code => code !== undefined);
+        const validTussCodes = selectedTussCodes.filter(code => code !== undefined);
+        const reportText = document.getElementById('generatedReport').textContent;
+
+        const updateData = {
+            patient_name: formData.patientName || 'Sem paciente definido',
+            report_data: {
+                ...formData,
+                selectedCidCodes: validCidCodes,
+                selectedTussCodes: validTussCodes
+            },
+            generated_text: reportText,
+            updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+            .from('reports')
+            .update(updateData)
+            .eq('id', currentReport.id)
+            .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        alert('Relatório atualizado com sucesso!');
+
+    } catch (error) {
+        console.error('Error updating report:', error);
+        alert('Erro ao atualizar relatório: ' + error.message);
+    }
+}
+
+function collectFormData() {
+    return {
+        reportDate: document.getElementById('reportDate').value,
+        patientName: document.getElementById('patientName').value,
+        patientDOB: document.getElementById('patientDOB').value,
+        patientCPF: document.getElementById('patientCPF').value,
+        patientPhone: document.getElementById('patientPhone').value,
+        patientCare: document.getElementById('patientCare').value,
+        insuranceProvider: document.getElementById('insuranceProvider').value,
+        insuranceNumber: document.getElementById('insuranceNumber').value,
+        clinicalSummary: document.getElementById('clinicalSummary').value,
+        materials: document.getElementById('materials').value
+    };
+}
+
+async function showSavedReportsList() {
+    try {
+        const { data: reports, error } = await supabase
+            .from('reports')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!reports || reports.length === 0) {
+            alert('Nenhum relatório salvo encontrado.');
+            return;
+        }
+
+        // Create modal to show reports list
+        showReportsModal(reports);
+
+    } catch (error) {
+        console.error('Error loading saved reports:', error);
+        alert('Erro ao carregar relatórios salvos: ' + error.message);
+    }
+}
+
+function showReportsModal(reports) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="reportsModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Relatórios Salvos</h3>
+                    <button id="closeReportsModal" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="reports-list">
+                        ${reports.map(report => `
+                            <div class="report-item" data-report-id="${report.id}">
+                                <div class="report-name">${report.name}</div>
+                                <div class="report-details">
+                                    <span>Paciente: ${report.patient_name}</span>
+                                    <span>Criado: ${new Date(report.created_at).toLocaleDateString('pt-BR')}</span>
+                                </div>
+                                <div class="report-actions">
+                                    <button class="btn btn-primary btn-small open-report-btn" data-report-id="${report.id}">
+                                        Abrir
+                                    </button>
+                                    <button class="btn btn-outline btn-small delete-report-btn" data-report-id="${report.id}">
+                                        Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Setup event listeners
+    document.getElementById('closeReportsModal').addEventListener('click', closeReportsModal);
+    document.getElementById('reportsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'reportsModal') {
+            closeReportsModal();
+        }
+    });
+
+    // Open report buttons
+    document.querySelectorAll('.open-report-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const reportId = e.target.dataset.reportId;
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                loadReport(report);
+                closeReportsModal();
+            }
+        });
+    });
+
+    // Delete report buttons
+    document.querySelectorAll('.delete-report-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const reportId = e.target.dataset.reportId;
+            const report = reports.find(r => r.id === reportId);
+            if (report && confirm(`Tem certeza que deseja excluir o relatório "${report.name}"?`)) {
+                await deleteReport(reportId);
+                closeReportsModal();
+                showSavedReportsList(); // Refresh list
+            }
+        });
+    });
+}
+
+function closeReportsModal() {
+    const modal = document.getElementById('reportsModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function deleteReport(reportId) {
+    try {
+        const { error } = await supabase
+            .from('reports')
+            .delete()
+            .eq('id', reportId)
+            .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        alert('Relatório excluído com sucesso!');
+
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        alert('Erro ao excluir relatório: ' + error.message);
+    }
+}
+
+async function loadReport(report) {
+    try {
+        currentReport = report;
+        isEditingExistingReport = true;
+        
+        const data = report.report_data;
+        
+        // Load form data
+        document.getElementById('reportDate').value = data.reportDate || '';
+        document.getElementById('patientName').value = data.patientName || '';
+        document.getElementById('patientDOB').value = data.patientDOB || '';
+        document.getElementById('patientCPF').value = data.patientCPF || '';
+        document.getElementById('patientPhone').value = data.patientPhone || '';
+        document.getElementById('patientCare').value = data.patientCare || '';
+        document.getElementById('insuranceProvider').value = data.insuranceProvider || '';
+        document.getElementById('insuranceNumber').value = data.insuranceNumber || '';
+        document.getElementById('clinicalSummary').value = data.clinicalSummary || '';
+        document.getElementById('materials').value = data.materials || '';
+
+        // Clear current codes
+        selectedCidCodes = [];
+        selectedTussCodes = [];
+
+        // Load CID codes
+        if (data.selectedCidCodes) {
+            data.selectedCidCodes.forEach((code, index) => {
+                selectedCidCodes[index] = code;
+                if (index > cidCounter) {
+                    for (let i = cidCounter; i < index; i++) {
+                        addNewCidField();
+                    }
+                }
+                const inputElement = document.getElementById(`cidCode${index}`);
+                if (inputElement) {
+                    inputElement.value = code.description;
+                }
+            });
+        }
+
+        // Load TUSS codes
+        if (data.selectedTussCodes) {
+            data.selectedTussCodes.forEach((code, index) => {
+                selectedTussCodes[index] = code;
+                if (index > tussCounter) {
+                    for (let i = tussCounter; i < index; i++) {
+                        addNewTussField();
+                    }
+                }
+                const inputElement = document.getElementById(`tussCode${index}`);
+                if (inputElement) {
+                    inputElement.value = code.description;
+                }
+            });
+        }
+
+        // Show patient data if available
+        if (data.patientName) {
+            currentPatient = {
+                name: data.patientName,
+                date_of_birth: data.patientDOB,
+                cpf: data.patientCPF,
+                phone: data.patientPhone,
+                default_care_number: data.patientCare,
+                insurance_provider: data.insuranceProvider,
+                insurance_number: data.insuranceNumber
+            };
+            
+            document.getElementById('patientDataSection').style.display = 'block';
+            document.getElementById('patientSectionTitle').textContent = `Paciente: ${data.patientName}`;
+            document.getElementById('editPatientBtn').style.display = 'none';
+            document.getElementById('savePatientSection').style.display = 'none';
+            setPatientFormReadonly(true);
+        }
+
+        // Show update options in page 3 if report is generated
+        if (report.generated_text) {
+            document.getElementById('generatedReport').textContent = report.generated_text;
+            document.getElementById('saveReportBtn').style.display = 'none';
+            document.getElementById('saveAsNewReportBtn').style.display = 'inline-block';
+            document.getElementById('updateExistingReportBtn').style.display = 'inline-block';
+            goToPage(3);
+        } else {
+            // Go to page 1 to start editing
+            goToPage(1);
+        }
+
+        alert(`Relatório "${report.name}" carregado com sucesso!`);
+
+    } catch (error) {
+        console.error('Error loading report:', error);
+        alert('Erro ao carregar relatório: ' + error.message);
+    }
 }
