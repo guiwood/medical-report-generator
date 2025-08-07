@@ -1,2 +1,3 @@
 # Netlify redirects file
+/test    /test.html   200
 /*    /login.html   200
