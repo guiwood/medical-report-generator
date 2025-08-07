@@ -1167,7 +1167,7 @@ async function saveCurrentReport() {
         const formattedDate = new Date(reportDate + 'T12:00:00').toLocaleDateString('pt-BR');
         const reportName = `${patientName} - ${formattedDate}`;
 
-        // Simplify data structure to avoid fetch errors
+        // Simplified data structure - name column should now be available
         const reportData = {
             user_id: currentUser.id,
             name: reportName,
