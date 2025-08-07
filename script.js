@@ -1149,6 +1149,7 @@ function setupReportHandlers() {
 }
 
 async function saveCurrentReport() {
+    console.log('saveCurrentReport called - no prompt should appear');
     if (!currentUser) {
         alert('Você precisa estar logado para salvar relatórios.');
         return;
