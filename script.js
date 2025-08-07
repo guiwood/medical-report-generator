@@ -168,8 +168,14 @@ function setupAuthenticatedFeatures() {
 }
 
 function setDefaultReportDate() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('reportDate').value = today;
+    // Get today's date in local timezone
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`;
+    
+    document.getElementById('reportDate').value = todayString;
 }
 
 function setupAutocomplete() {
@@ -444,11 +450,24 @@ function setupPhoneFormatting() {
 }
 
 function setupFormHandlers() {
+    // Prevent form submission
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
     const copyButton = document.getElementById('copyButton');
-
     copyButton.addEventListener('click', function() {
         copyToClipboard();
     });
+    
+    // Back to dashboard button
+    document.getElementById('backToDashboard').addEventListener('click', function() {
+        window.location.href = 'dashboard.html';
+    });
+    
+    // Save as template button
+    document.getElementById('saveAsTemplate').addEventListener('click', saveAsTemplate);
 }
 
 function calculateAge(birthDate) {
@@ -1142,9 +1161,21 @@ function startNewReport() {
 
 function setupReportHandlers() {
     // Report action buttons
-    document.getElementById('saveReportBtn').addEventListener('click', saveCurrentReport);
-    document.getElementById('saveAsNewReportBtn').addEventListener('click', saveAsNewReport);
-    document.getElementById('updateExistingReportBtn').addEventListener('click', updateExistingReport);
+    document.getElementById('saveReportBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveCurrentReport();
+    });
+    document.getElementById('saveAsNewReportBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveAsNewReport();
+    });
+    document.getElementById('updateExistingReportBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        updateExistingReport();
+    });
     document.getElementById('openSavedReport').addEventListener('click', showSavedReportsList);
 }
 
